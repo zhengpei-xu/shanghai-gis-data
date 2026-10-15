@@ -396,8 +396,9 @@ summary = {
 Source: Geofabrik extracts {", ".join(PROVINCES)} (timestamps in metadata.json), clipped to Shanghai + {BUFFER_KM} km.
 Raw provincial files: {RAW_DIR.resolve()}
 
-- highways_buffer{BUFFER_KM}km_{SNAPSHOT}.parquet / .gpkg: every highway=* way in the buffer; key tags as columns, all tags in tags_json; in_shanghai flag.
-- shanghai_buffer{BUFFER_KM}km_{SNAPSHOT}.osm.pbf: all OSM data in the buffer (only if osmium-tool was installed).
+Release assets (https://github.com/zhengpei-xu/shanghai-gis-data/releases/tag/osm-{SNAPSHOT}):
+- shanghai_osm_highways.parquet / .gpkg: every highway=* way in the buffer; key tags as columns, all tags in tags_json; in_shanghai flag.
+- shanghai_osm.osm.pbf: all OSM data in the buffer.
 - tables/: tag completeness and value diagnostics, length-weighted, inside the municipal boundary.
 - boundary and buffer GeoJSON.
 
