@@ -221,3 +221,6 @@ __marimo__/
 
 # Local OSM data (snapshots are published as GitHub Releases)
 data/
+
+# macOS
+.DS_Store
