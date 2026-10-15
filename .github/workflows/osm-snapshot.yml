@@ -63,12 +63,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           S: ${{ steps.run.outputs.snapshot }}
           OUT: ${{ steps.run.outputs.out }}
+        # Asset names carry no date, so .../releases/latest/download/<name> always gives the newest
+        # snapshot and .../releases/download/osm-YYYYMMDD/<name> a fixed one.
         run: |
-          files=$(ls "$OUT"/*.parquet "$OUT"/*.gpkg "$OUT"/*.osm.pbf 2>/dev/null)
-          if gh release view "osm-$S" >/dev/null 2>&1; then
-            gh release upload "osm-$S" $files --clobber
+          mkdir -p assets
+          cp "$OUT"/highways_*.parquet assets/shanghai_osm_highways.parquet
+          cp "$OUT"/highways_*.gpkg assets/shanghai_osm_highways.gpkg
+          [ -f "$OUT"/shanghai_buffer*.osm.pbf ] && cp "$OUT"/shanghai_buffer*.osm.pbf assets/shanghai_osm.osm.pbf
+          if gh api "repos/${{ github.repository }}/releases/tags/osm-$S" >/dev/null 2>&1; then
+            gh release upload "osm-$S" assets/* --clobber
           else
-            gh release create "osm-$S" $files --title "Shanghai OSM snapshot $S" --notes-file "$OUT/README.md"
+            gh release create "osm-$S" assets/* --latest --title "Shanghai OSM snapshot $S" --notes-file "$OUT/README.md"
           fi
 
       # Small files are committed, so the change in tag completeness is visible over time.
