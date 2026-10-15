@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local OSM data (snapshots are published as GitHub Releases)
+data/
+
+# macOS
+.DS_Store

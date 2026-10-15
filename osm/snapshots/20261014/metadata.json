@@ -1,0 +1,23 @@
+{
+  "snapshot": "20261014",
+  "source_timestamps": {
+    "shanghai": "2026-10-14T20:21:12Z",
+    "jiangsu": "2026-10-14T20:21:12Z",
+    "zhejiang": "2026-10-14T20:21:12Z"
+  },
+  "source": {
+    "shanghai": "https://download.geofabrik.de/asia/china/shanghai-latest.osm.pbf",
+    "jiangsu": "https://download.geofabrik.de/asia/china/jiangsu-latest.osm.pbf",
+    "zhejiang": "https://download.geofabrik.de/asia/china/zhejiang-latest.osm.pbf"
+  },
+  "buffer_km": 20,
+  "boundary": "boundaries/shanghai_municipal_and_district_boundaries.geojson",
+  "ways_in_buffer": 272950,
+  "km_in_shanghai": 52190.0,
+  "main_roads_km": 17559.0,
+  "main_maxspeed_%": 6.2,
+  "main_lanes_%": 23.3,
+  "minor_maxspeed_%": 0.6,
+  "named_roads_mixed_class_%": 18.0,
+  "created": "2026-10-15T03:36:30"
+}

@@ -1,0 +1,88 @@
+name: OSM snapshot (Shanghai)
+
+# Runs on the 1st of every month. The snapshot itself only runs in January and July
+# (every half year); the other months only keep the schedule alive (see keepalive).
+on:
+  schedule:
+    - cron: "0 2 1 * *"
+  workflow_dispatch: {}          # "Run workflow" button: takes a snapshot now
+
+permissions:
+  contents: write                # commit tables, create releases
+  actions: write                 # keepalive
+
+jobs:
+  keepalive:
+    # GitHub disables scheduled workflows in public repos after 60 days without
+    # repository activity. Re-enabling the workflow through the API every month
+    # keeps the half-yearly schedule from being switched off.
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/osm-snapshot.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - id: when
+        run: |
+          month=$(date -u +%m)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$month" = "01" ] || [ "$month" = "07" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Not a snapshot month ($month); skipping."
+          fi
+
+      - if: steps.when.outputs.run == 'true'
+        uses: actions/checkout@v4
+
+      - if: steps.when.outputs.run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - if: steps.when.outputs.run == 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y osmium-tool
+          pip install -r requirements.txt
+
+      - if: steps.when.outputs.run == 'true'
+        id: run
+        env:
+          DATA_DIR: ${{ runner.temp }}/osm_shanghai
+          FORCE_DOWNLOAD: "1"
+        run: python scripts/osm_snapshot.py
+
+      # Large files (> 100 MB is not allowed in git) go to a GitHub Release per snapshot.
+      - if: steps.when.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          S: ${{ steps.run.outputs.snapshot }}
+          OUT: ${{ steps.run.outputs.out }}
+        run: |
+          files=$(ls "$OUT"/*.parquet "$OUT"/*.gpkg "$OUT"/*.osm.pbf 2>/dev/null)
+          if gh release view "osm-$S" >/dev/null 2>&1; then
+            gh release upload "osm-$S" $files --clobber
+          else
+            gh release create "osm-$S" $files --title "Shanghai OSM snapshot $S" --notes-file "$OUT/README.md"
+          fi
+
+      # Small files are committed, so the change in tag completeness is visible over time.
+      - if: steps.when.outputs.run == 'true'
+        env:
+          S: ${{ steps.run.outputs.snapshot }}
+          OUT: ${{ steps.run.outputs.out }}
+        run: |
+          dest="osm/snapshots/$S"
+          mkdir -p "$dest"
+          cp -r "$OUT"/tables "$OUT"/figures "$OUT"/metadata.json "$OUT"/README.md "$OUT"/*.geojson "$dest"/
+          cp "$OUT"/metadata.json osm/latest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898279+github-actions[bot]@users.noreply.github.com"
+          git add osm
+          git diff --cached --quiet || git commit -m "OSM snapshot $S"
+          git push
