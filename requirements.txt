@@ -1,0 +1,6 @@
+osmium>=4.0
+geopandas>=1.0
+pandas>=2.2
+pyarrow
+matplotlib
+requests
